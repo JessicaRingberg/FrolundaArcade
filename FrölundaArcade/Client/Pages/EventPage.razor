@@ -1,0 +1,28 @@
+﻿@page "/event-page"
+@inject ISnackbar Snackbar
+
+<MudGrid Justify="Justify.Center">
+    <MudItem xs="12" sm="6">
+        <MudText Typo="Typo.h3">Välkommen till våra LAN event</MudText>
+        <MudText Typo="Typo.body1">Varje månad anordnar vi LAN event för alla gamers. Anmäl dig idag för att garantera din plats!</MudText>
+        <MudForm @ref="form">
+            <MudTextField T="string" Label="Förnamn"></MudTextField>
+            <MudTextField T="string" Label="Efternamn"></MudTextField>
+            <MudTextField T="string" Label="Email"></MudTextField>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="my-4" OnClick="EventRegistation">Anmäl mig</MudButton>
+        </MudForm>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudImage Fluid="true" Src="Lan.png" />
+    </MudItem>
+</MudGrid>
+@code {
+    MudForm form;
+
+    private void EventRegistation()
+    {
+        form.Reset();
+        Snackbar.Add("Du är nu anmäld!", Severity.Success);
+    }
+
+}

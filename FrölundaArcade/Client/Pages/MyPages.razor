@@ -1,0 +1,61 @@
+﻿@page "/myPages"
+@attribute [Authorize]
+@inject HttpClient _http
+
+<PageTitle>My pages</PageTitle>
+
+
+
+<MudGrid Justify="Justify.Center">
+    <MudItem xs="8">
+        <h4>  Mina sidor</h4>
+    </MudItem>
+    <MudItem xs="8">
+        <MudAvatar Style="height: 100px; width: 100px; font-size: 2rem;" Color="Color.Primary">@FirstLetter</MudAvatar>
+    </MudItem>
+    <MudItem xs="12" lg="8">
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" MaxHeight="2">
+            <MudTabPanel Text="Information">
+                <UserCredentials Model="UserProfile" />
+            </MudTabPanel>
+            <MudTabPanel Text="Köphistorik">
+                <OrderHistory Model="Orders" />
+            </MudTabPanel>
+        </MudTabs>
+    </MudItem>
+</MudGrid>
+
+@if (_recommendedGames.Any())
+{
+    <MudGrid Class="mt-5">
+        <MudItem xs="12">
+            <MudText Typo="Typo.h6" Align="Align.Center">Rekommenderade spel</MudText>
+        </MudItem>
+        <GameList Games="_recommendedGames" />
+    </MudGrid>
+}
+
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthStateTask { get; set; }
+
+    private List<GameForList> _recommendedGames = new();
+    public UserDetails UserProfile = new UserDetails() { Address = new AddressDetails() };
+    public List<OrderDetails> Orders { get; set; } = new();
+    public char FirstLetter { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateTask;
+        var userId = authState.User.FindFirst(Constants.UserIdClaim).Value;
+        var email = authState.User.FindFirst(Constants.EmailClaim).Value;
+
+        UserProfile = await _http.GetFromJsonAsync<UserDetails>(Constants.Users + userId);
+        Orders = await _http.GetFromJsonAsync<List<OrderDetails>>(Constants.Orders);
+        _recommendedGames = await _http.GetFromJsonAsync<List<GameForList>>(Constants.Users + email + "/proposals");
+
+        FirstLetter = UserProfile.UserName[0];
+    }
+}

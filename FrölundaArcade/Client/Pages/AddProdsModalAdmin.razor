@@ -1,0 +1,80 @@
+﻿@inject HttpClient _http
+@inject NavigationManager _navigationManager
+@attribute [Authorize(Roles = Roles.Admin)]
+@inject IDialogService DialogService
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+<DataAnnotationsValidator/>
+    <MudGrid Justify="Justify.Center">
+        <MudItem>
+            <MudCard Style="width: 25vw; max-height: 75vh; overflow:auto;" id="scroll_id">
+                <MudCardContent>
+                    <MudTextField Label="Namn" @bind-Value="model.Name" For="@(() => model.Name)"></MudTextField>
+                </MudCardContent>
+                <MudCardContent>
+                    <MudNumericField Label="Pris" @bind-Value="model.Price" For="@(() => model.Price)"></MudNumericField>
+                </MudCardContent>
+                <MudCardContent>
+                    <MudNumericField Label="Kvantitet" @bind-Value="model.Quantity" For="@(() => model.Quantity)"></MudNumericField>
+                </MudCardContent>
+                <MudCardContent>
+                    <MudNumericField Label="Åldersgräns" @bind-Value="model.AgeLimit" For="@(() => model.AgeLimit)"></MudNumericField>
+                </MudCardContent>
+                <MudCardContent>
+                    <MudSelect T="int" Label="Kategori" @bind-Value="model.CategoryId">
+                        @foreach (var category in Categories)
+                        {
+                            <MudSelectItem Value="@category.Id">@category.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudCardContent>
+                <MudCardContent>
+
+                    <MudTextField Lines="5" Label="Beskrivning" @bind-Value="model.Description" For="@(() => model.Description)"></MudTextField>
+
+                </MudCardContent>
+                <MudCardContent>
+                    <MudTextField Label="Bild URL" @bind-Value="model.ImageUrl" For="@(() => model.ImageUrl)"></MudTextField>
+                </MudCardContent>
+                <MudCardContent>
+                    <MudTextField Lines="7" Label="Teknisk specifikation" @bind-Value="model.TechnicalSpec" For="@(() => model.TechnicalSpec)"></MudTextField>
+                </MudCardContent>
+                <MudCardContent>
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Lägg till</MudButton>
+                    </MudCardActions>
+                </MudCardContent>
+            </MudCard>
+            <MudScrollToTop TopOffset="0" Selector="#scroll_id" Style="z-index:0;"></MudScrollToTop>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    GameUpsert model = new GameUpsert();
+    List<Category> Categories { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Categories = await _http.GetFromJsonAsync<List<Category>>(Constants.Categories);
+    }
+
+    private async Task OnValidSubmit()
+    {
+        var id = await _http.PostAsJsonAsync(Constants.Games, model);
+        model.Id = await id.Content.ReadFromJsonAsync<int>();
+        var game = new GameForList
+			{
+				Id = model.Id,
+				Name = model.Name,
+				AgeLimit = model.AgeLimit,
+				Category = Categories.First(x => x.Id == model.CategoryId).Name,
+                ImageURL = model.ImageUrl,
+                Price = model.Price
+			};
+        MudDialog.Close(game);
+    }
+
+}

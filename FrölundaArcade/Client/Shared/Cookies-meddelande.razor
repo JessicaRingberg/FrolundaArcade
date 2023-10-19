@@ -1,0 +1,35 @@
+﻿@inject LocalStorage LocalStorage
+
+@if (isOpen)
+{
+    <div class="cookie-consent-banner">
+        <div class="cookie-consent-banner-content">
+            <div class="cookie-consent-banner-text">
+                <div class="cookie-consent-banner-description">
+                    Vi använder cookies för att ge dig bästa möjliga kundupplevelse.
+                    <br /> Om du fortsätter använda sidan innebär det att du accepterar cookies. Vill du läsa mer? Klicka <a Href="/cookies">här.</a>
+                </div>
+            </div>
+            <div class="cookie-consent-banner-btns">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => CloseModel()">Jag godkänner</MudButton>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    private bool isOpen = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var showPopup = await LocalStorage.Get<bool?>(Constants.CookiesPopup);
+        if (showPopup.HasValue) isOpen = showPopup.Value;
+    }
+
+    private async void CloseModel()
+    {
+        isOpen = !isOpen;
+        await LocalStorage.Set(Constants.CookiesPopup, false);
+    }
+}

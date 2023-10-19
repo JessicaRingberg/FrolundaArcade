@@ -1,0 +1,35 @@
+﻿@inject HttpClient _http
+@inject NavigationManager _navigationManager
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="review" OnValidSubmit="Submit">
+            <DataAnnotationsValidator/>
+            <MudText >Ditt betyg</MudText>
+            <MudRating @bind-SelectedValue="review.Rating" Class="mt-2" @bind-Value="review.Rating"/>
+            <MudTextField Lines="5" Label="Din kommentar" Class="mt-3 mb-3"
+                          @bind-Value="review.Text" For="@(() => review.Text)" Required="true"/>
+            <MudButton OnClick="Cancel">Avbryt</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="@Color.Primary" Variant="Variant.Filled">Recensera</MudButton>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] 
+    MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public int GameId { get; set; }
+
+    ReviewUpsert review = new();
+
+    void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        await _http.PostAsJsonAsync(Constants.Reviews(GameId), review);
+        MudDialog.Close(review);
+    }
+}

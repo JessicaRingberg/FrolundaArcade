@@ -1,0 +1,60 @@
+﻿@inherits LayoutComponentBase
+
+@using MudBlazor.Utilities;
+<MudThemeProvider Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Style="background-color:#20663E">
+        <Logo />
+        <MudSpacer />
+        <LoginDisplay />
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer Class="pa-4">
+            @Body
+        </MudContainer>
+        <Cookies_meddelande/>
+        <footer>
+            © 2022 Frölunda Arcade
+            <footerContent>
+            <MudNavLink Href="/privacyPolicy">Integritetspolicy</MudNavLink>
+            <MudNavLink Href="/cookies">Cookies policy</MudNavLink>
+            </footerContent>
+            info@frolundaarcade.se
+        </footer>
+    </MudMainContent>
+</MudLayout>
+
+<style>
+    .mud-container {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    footer {
+        background-color: #20663E;
+        text-align: center;
+        font-size: 1rem;
+        color: #fff;
+        padding: 10px;
+    }
+    footerContent{
+        display: inline-flex;
+    }
+    
+</style>
+
+@code {
+    private MudTheme _theme = new()
+    {
+        Palette = new()
+        {
+            Primary = new MudColor("#20663E"),
+            Secondary = new MudColor("#2E8D57"),
+            Warning = new MudColor("#996905")
+        }
+    };
+}

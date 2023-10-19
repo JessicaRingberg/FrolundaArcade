@@ -1,0 +1,44 @@
+﻿@inject IDialogService DialogService
+
+<MudTable Items="@Model" Context="OrderContext" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+    <ColGroup>
+        <col />
+        <col />
+        <col style="width:200px;" />
+    </ColGroup>
+    <HeaderContent>
+        <MudTh>Order Id</MudTh>
+        <MudTh>Spel</MudTh>
+        <MudTh>Order status</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="OrderId">@OrderContext.Id</MudTd>
+        <MudTd DataLabel="Games">
+            <MudTable Items="@OrderContext.Games" Context="GamesContext">
+                <HeaderContent>
+                    <MudTh>Namn</MudTh>
+                    <MudTh>Pris</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@GamesContext.Name</MudTd>
+                    <MudTd DataLabel="Price">@GamesContext.Price</MudTd>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="() => AddReview(GamesContext)">Skriv recension</MudButton>
+                </RowTemplate>
+            </MudTable>
+        </MudTd>
+        <MudTd DataLabel="OrderStatus">@OrderContext.OrderStatus</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    [Parameter]
+	public List<OrderDetails> Model { get; set; }
+
+    private void AddReview(GameForOrder game)
+    {
+        var parameter = new DialogParameters();
+        parameter.Add(nameof(WriteReviewModal.GameId), game.GameId);
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        DialogService.Show<WriteReviewModal>($"Skriv recension för {game.Name}", parameter, options);
+    }
+}

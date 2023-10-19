@@ -1,0 +1,43 @@
+﻿.cookie-consent-banner {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    z-index: 10;
+    box-sizing: border-box;
+    width: 100%;
+    background-color: #F1F6F4;
+}
+
+.cookie-consent-banner-content {
+    display: flex;
+    flex-direction: row;
+    text-align: center;
+    align-items: center;
+    justify-content:center;
+    gap: 1rem;
+    padding: 1.5rem 1rem 1rem 1rem;
+}
+
+.cookie-consent-banner-btns a {
+    color: white;
+}
+
+.cookie-consent-banner-description {
+    font-family: "CeraPRO-Regular", sans-serif, arial;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.cookie-consent-banner-description a {
+    color: #20663E;
+}
+
+
+@media (max-width: 850px) {
+    .cookie-consent-banner-content {
+        display: flex;
+        flex-direction: column;
+        gap: .5rem;
+    }
+}

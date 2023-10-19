@@ -1,0 +1,76 @@
+﻿@page "/checkout"
+@using System.ComponentModel.DataAnnotations
+@using FrölundaArcade.Client.Helpers
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Authorization
+@inject HttpClient _http
+@inject NavigationManager _navigationManager
+@inject GuestCart _guestCart
+
+
+
+<br/>
+<MudGrid Justify="Justify.Center">
+    <MudItem>
+        <MudCard Style="width: 50vw;"> 
+  
+            <br/>
+            <MudText Align="Align.Center" Typo="Typo.h3"><b>Tack för ditt köp!</b></MudText>
+            <MudText Align="Align.Center" Typo="Typo.h6"><b>Orderbekräftelse:</b></MudText>
+            <br/>
+
+            <MudTable Items="@Games" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info" >
+			    <HeaderContent>
+                    <MudTh></MudTh>
+				    <MudTh>Namn</MudTh>
+				    <MudTh>Pris</MudTh>
+                    <MudTh>Antal</MudTh>
+			    </HeaderContent>
+			    <RowTemplate >
+                    <MudTd DataLabel=""><MudImage Src="@context.ImageURL" Alt="Mony the dog" Elevation="10" Width="100" Height="125" Class="rounded-lg" /></MudTd>
+				    <MudTd DataLabel="Namn">@context.Name</MudTd>
+				    <MudTd DataLabel="Pris">@context.Price kr</MudTd>
+                    <MudTd DataLabel="Antal"> @context.Quantity</MudTd>
+			    </RowTemplate>
+		    </MudTable>
+                
+            <MudCardContent >
+                <br/>
+                <MudGrid Justify="Justify.Center">
+                    <MudText Typo="Typo.h6"><b>Totalpris: @Costs.TotalPrice kr</b></MudText>
+                </MudGrid>
+
+                <MudGrid Justify="Justify.Center">
+                    <MudCardContent >
+                        <MudCardActions >
+                            <MudButton OnClick="OrderConfirmed" Variant="Variant.Filled" Color="Color.Primary">Tillbaka till startsidan</MudButton>
+                        </MudCardActions>
+                    </MudCardContent>
+                </MudGrid>
+               
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+
+
+@code {
+
+    GameUpsert model = new GameUpsert();
+
+    [Parameter]
+    public ShippingCosts Costs { get; set; }
+
+    private double _sumPrice = 0;
+
+    [Parameter]
+    public List<CartGame> Games { get; set; }
+
+    private void OrderConfirmed()
+	{
+        _guestCart.DeleteCart();
+		_navigationManager.NavigateTo("/");	
+	}
+
+}

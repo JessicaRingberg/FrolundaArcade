@@ -1,0 +1,7 @@
+﻿<MudNavLink Match="NavLinkMatch.All" IconColor="Color.Success" Icon="@Icons.Material.Filled.Home" Style="background-color:#20663E; color:white;" Color="Color.Inherit" Href="">Home</MudNavLink>
+<MudNavLink IconColor="Color.Primary" Icon="@Icons.Filled.ShoppingCart" Href="/cart">Cart</MudNavLink>
+<MudNavLink IconColor="Color.Primary" Icon="@Icons.Filled.Person" Href="/myPages">Mina sidor</MudNavLink>
+
+<AuthorizeView Roles="@Roles.Admin">
+    <MudNavLink IconColor="Color.Primary" Icon="@Icons.Filled.AdminPanelSettings" Href="/admin">Admin</MudNavLink>
+</AuthorizeView>

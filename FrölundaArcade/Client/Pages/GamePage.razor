@@ -1,0 +1,135 @@
+﻿@page "/game-page"
+@inject HttpClient _http
+@inject NavigateTo NavigateTo
+@inject NavigationManager _navigationManager
+@inject ISnackbar Snackbar
+
+<MudGrid>
+    <MudItem xs="12" sm="3">
+        <MudGrid Class="d-block">
+            <MudItem>
+                <MudTextField @bind-Value="name" Variant="Variant.Outlined" Placeholder="Sök" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                        @if (category != Constants.Tillbehör)
+                        {
+                            <MudSelect T="string" Label="Kategori" Variant="Variant.Outlined" @bind-value="category">
+                                @foreach (var category in Categories)
+                                {
+                                    if (category.Name == Constants.Tillbehör)
+                                    {
+                                        return;
+                                    }
+                                    <MudSelectItem Value=@category.Name></MudSelectItem>
+                                }
+            </MudSelect>
+
+            <MudSlider @bind-Value="ageLimit" Min="3" Max="18" Color="Color.Primary">Åldersgräns max: @ageLimit.ToString() år</MudSlider>
+        }
+        <MudSlider T="int" Value="maxPrice" ValueChanged="MaxPriceChanged" Max="_maxPrice" Step="_priceStep" Color="Color.Primary">Maxpris:
+            @maxPrice@currency</MudSlider>
+        <MudSlider T="int" Value="minPrice" ValueChanged="MinPriceChanged" Max="_maxPrice - _priceStep" Step="_priceStep"
+                   Color="Color.Primary">Minimum pris: @minPrice@currency</MudSlider>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => FilterProducts()">Filtrera
+        </MudButton>
+        </MudItem>
+        <MudItem xs="12" sm="12">
+            <MudCard>
+                <MudCardContent>
+                    Missa inte våra LAN events!
+                    <MudLink Href="/event-page">Till Events</MudLink>
+                    <MudLink Href="/event-page">
+                        <MudCardMedia Image="/Lan.png" style="background-size: contain;"></MudCardMedia>
+                    </MudLink>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+        </MudGrid>
+    </MudItem>
+    <MudItem xs="12" sm="9">
+        <MudGrid>
+            <MudItem xs="12" sm="9" Class="d-inline">
+                <h2>Våra Spel</h2>
+                <p>Hos oss hittar ni alla de senaste spelen!</p>
+                <MudButton Class="my-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowAccesories">Visa Tillbehör</MudButton>
+                <MudButton Class="my-3" Variant="Variant.Filled" Color="Color.Secondary" OnClick="ToHomePage">Visa alla Produkter</MudButton>
+
+            </MudItem>
+         
+            <GameList Games="Games" _isLoggedIn="_isLoggedIn" />
+        </MudGrid>
+    </MudItem>
+    <MudScrollToTop TopOffset="100" Style="z-index:2001; bottom:60px; right: 40px;">     
+        <div>
+            <MudIconButton Variant="Variant.Filled" Color="Color.Warning" Icon="@Icons.Filled.ArrowUpward"/>
+        </div>
+    </MudScrollToTop>
+</MudGrid>
+@code {
+
+    bool _isLoggedIn = false;
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthStateTask { get; set; }
+
+    private int _maxPrice = 1000;
+    private int _priceStep = 50;
+    public string name = "";
+    public string category = "";
+    public int maxPrice = 1000;
+    public int minPrice = 0;
+    public double ageLimit = 18;
+    private string currency = "kr";
+
+    List<GameForList> Games { get; set; } = new();
+    List<Category> Categories { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateTask;
+        _isLoggedIn = authState.User.Identity?.IsAuthenticated??false;
+
+        Games = await _http.GetFromJsonAsync<List<GameForList>>(QueryHelpers.AddQueryString(Constants.Games, nameof(GameFilters.OnlyInStock), false.ToString()));
+        Games = Games.FindAll(g => g.Category != Constants.Tillbehör);
+
+        Categories = await _http.GetFromJsonAsync<List<Category>>(Constants.Categories);
+    }
+
+    private void MinPriceChanged(int price) => minPrice = price >= maxPrice ? maxPrice - _priceStep : price;
+
+    private void MaxPriceChanged(int price) => maxPrice = price <= minPrice ? minPrice + _priceStep : price;
+
+    private async Task FilterProducts()
+    {
+
+        var query = new Dictionary<string, string>()
+        {
+            [nameof(GameFilters.Name)] = name,
+            [nameof(GameFilters.Category)] = category,
+            [nameof(GameFilters.MinPrice)] = minPrice.ToString(),
+            [nameof(GameFilters.MaxPrice)] = maxPrice.ToString(),
+            [nameof(GameFilters.AgeLimit)] = ageLimit.ToString(),
+            [nameof(GameFilters.OnlyInStock)] = false.ToString()
+        };
+
+        var uri = QueryHelpers.AddQueryString(Constants.Games, query);
+        Games = await _http.GetFromJsonAsync<List<GameForList>>(uri);
+
+        if (category == "")
+        {
+            Games = Games.FindAll(g => g.Category != Constants.Tillbehör);
+        }
+
+    }
+
+    private async Task ShowAccesories()
+    {
+        _navigationManager.NavigateTo("/accessories-page");
+    }
+
+    private async Task ToHomePage()
+    {
+        _navigationManager.NavigateTo("/");
+    }
+
+}

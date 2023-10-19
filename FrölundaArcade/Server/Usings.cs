@@ -1,0 +1,10 @@
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Text;
+global using System.Threading.Tasks;
+global using FrölundaArcade.Server.Extensions;
+global using FrölundaArcade.Server.Entities;
+global using FrölundaArcade.Shared;
+global using Microsoft.EntityFrameworkCore;
+global using FrölundaArcade.Server.Interfaces;

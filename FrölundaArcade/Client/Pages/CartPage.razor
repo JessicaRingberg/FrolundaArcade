@@ -1,0 +1,99 @@
+﻿@page "/cart"
+@inject HttpClient _http
+@inject NavigationManager _navigationManager
+@inject GuestCart GuestCart
+@inject ISnackbar Snackbar
+
+@if (!_purchased)
+{
+	<h3>Kundvagn</h3>
+	<MudText Typo="Typo.subtitle1">
+		
+		<MudTable Items="@Games" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info">
+			<HeaderContent>
+				<MudTh></MudTh>
+				<MudTh>Namn</MudTh>
+				<MudTh>Pris</MudTh>
+				<MudTh>Antal</MudTh>
+				<MudTh></MudTh>
+			</HeaderContent>
+			<RowTemplate>
+				<MudTd DataLabel=""><MudImage Src="@context.ImageURL" Alt="Mony the dog" Elevation="10" Width="100" Height="125" Class="rounded-lg" /></MudTd>
+				<MudTd DataLabel="Namn">@context.Name</MudTd>
+				<MudTd DataLabel="Pris">@context.Price kr</MudTd>
+				<MudTd DataLabel="Antal">@context.Quantity</MudTd>
+				<MudTh>
+					<MudTooltip Text="Ta bort">
+						<MudButton Color="Color.Error" Size="Size.Small" OnClick="@(() => Delete(context.GameId))"><MudIcon Color="Color.Inherit" Icon="@Icons.Material.Filled.Delete" /></MudButton>
+					</MudTooltip>
+				</MudTh>
+			</RowTemplate>
+		</MudTable>
+		<MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium" OnClick="@(() => CheckOut())">Till kassan: Totalpris: @TotalPrice Kr</MudButton>
+		
+
+	</MudText>
+
+}
+else {<PaymentMethods Games="Games"/> }
+
+
+@code {
+	[CascadingParameter]
+	public Task<AuthenticationState> AuthStateTask { get; set; }
+
+	private List<CartGame> Games { get; set; }
+	private double TotalPrice { get; set; }
+
+	string _loginStateMessage = "Du är inte inloggad";
+	bool _isLoggedIn = false;
+	bool _guest = false;
+
+	bool _purchased = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var authState = await AuthStateTask;
+		_isLoggedIn = authState.User.Identity?.IsAuthenticated??false;
+
+		if (_isLoggedIn)
+		{
+			Games = await _http.GetFromJsonAsync<List<CartGame>>(Constants.Cart);
+		}
+		else
+		{
+			Games = GuestCart.GetCart();
+		}
+		TotalPrice = 0;
+		foreach(var game in Games)
+		{
+			TotalPrice += (game.Price * game.Quantity);
+		}
+	}
+
+	private async Task Delete(int id)
+	{
+		if (_isLoggedIn)
+		{
+			await _http.DeleteAsync(Constants.Cart + id);
+		}
+		else
+		{
+			GuestCart.Delete(id);
+		}
+		await OnInitializedAsync();
+	}
+
+	private void CheckOut()
+	{
+		if(Games.Count == 0)
+		{
+			Snackbar.Add("Lägg till något i kundvagnen först", Severity.Info);
+			_navigationManager.NavigateTo("");
+		}
+		else{
+			_purchased= true;
+		}
+
+	}
+}

@@ -1,0 +1,314 @@
+@page "/admin"
+@inject HttpClient _http
+@inject NavigationManager _navigationManager
+@attribute [Authorize(Roles = Roles.Admin)]
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudGrid Justify="Justify.Center">
+<MudItem xs="12" sm="12" md="12" lg="12">
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" MaxHeight="2">
+<MudTabPanel Text="Kunder">
+    <MudTable Items="@Users" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info">
+        <HeaderContent>
+            <MudTh></MudTh>
+            <MudTh></MudTh>
+            <MudTh>Id</MudTh>
+            <MudTh>Namn</MudTh>
+            <MudTh>Telefonnummer</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudButton Color="Color.Error" Size="Size.Small" OnClick="@(() => GetCart(context.AppUserId))">Kundvagn</MudButton>
+            </MudTd>
+            <MudTd>
+                <MudButton Color="Color.Error" Size="Size.Small" OnClick="@(() => GetOrder(context.Email))">Order</MudButton>
+            </MudTd>
+            <MudTd DataLabel="Id">@context.AppUserId</MudTd>
+            <MudTd DataLabel="Name">@context.UserName</MudTd>
+            <MudTd DataLabel="PhoneNumber">@context.PhoneNumber</MudTd>
+        </RowTemplate>
+        <ChildRowContent>
+            @if (context.ShowCartDetails)
+            {
+                <MudTr>
+                    <td colspan="4">
+                        <MudCard Elevation="0">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.body1">Kundvagnsdetaljer för <strong>@context.UserName</strong></MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent Class="pa-0">
+                                <MudTable Items="@Products" Context="ProductsContext" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+                                    <ColGroup>
+                                        <col/>
+                                        <col/>
+                                        <col style="width: 200px;"/>
+                                    </ColGroup>
+                                    <HeaderContent>
+                                        <MudTh>Spel id</MudTh>
+                                        <MudTh>Namn</MudTh>
+                                        <MudTh>Pris</MudTh>
+                                        <MudTh>Antal</MudTh>
+                                        <MudTh>Antal i lager</MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate>
+                                        <MudTd DataLabel="GameId">@ProductsContext.GameId</MudTd>
+                                        <MudTd DataLabel="Name">@ProductsContext.Name</MudTd>
+                                        <MudTd DataLabel="Price">@ProductsContext.Price</MudTd>
+                                        <MudTd DataLabel="Quantity">@ProductsContext.Quantity</MudTd>
+                                        <MudTd DataLabel="StockQuantity">@ProductsContext.StockQuantity</MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            </MudCardContent>
+                        </MudCard>
+                    </td>
+                </MudTr>
+            }
+            @if (context.ShowOrderDetails)
+            {
+                <MudTr>
+                    <td colspan="4">
+                        <MudCard Elevation="0">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.body1">Order för <strong>@context.UserName</strong></MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent Class="pa-0">
+                                <MudTable Items="@Order" Context="OrderContext" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+                                    <ColGroup>
+                                        <col/>
+                                        <col/>
+                                        <col style="width: 200px;"/>
+                                    </ColGroup>
+                                    <HeaderContent>
+                                        <MudTh>Order id</MudTh>
+                                        <MudTh>Spel</MudTh>
+                                        <MudTh>Stad</MudTh>
+                                        <MudTh>Gata</MudTh>
+                                        <MudTh>Post Nummer</MudTh>
+                                        <MudTh>Orderstatus</MudTh>
+                                    </HeaderContent>
+                                    <RowTemplate>
+                                        <MudTd DataLabel="OrderId">@OrderContext.Id</MudTd>
+                                        <MudTd DataLabel="Games">
+                                            <MudTable Items="@OrderContext.Games" Context="GamesContext">
+                                                <HeaderContent>
+                                                    <MudTh>Spel id</MudTh>
+                                                    <MudTh>Namn</MudTh>
+                                                    <MudTh>Pris</MudTh>
+                                                    <MudTh>Antal</MudTh>
+                                                </HeaderContent>
+                                                <RowTemplate>
+                                                    <MudTd DataLabel="GameId">@GamesContext.GameId</MudTd>
+                                                    <MudTd DataLabel="Name">@GamesContext.Name</MudTd>
+                                                    <MudTd DataLabel="Price">@GamesContext.Price</MudTd>
+                                                    <MudTd DataLabel="Quantity">@GamesContext.Quantity</MudTd>
+                                                </RowTemplate>
+                                            </MudTable>
+                                        </MudTd>
+                                        <MudTd DataLabel="Stad">@OrderContext.ShippingAddress.City</MudTd>
+                                        <MudTd DataLabel="Gata">@OrderContext.ShippingAddress.Street</MudTd>
+                                        <MudTd DataLabel="Post Nummer">@OrderContext.ShippingAddress.Zipcode</MudTd>
+                                        <MudTd>
+                                            <MudSelect T="OrderStatus.Status" Label="Orderstatus" Variant="Variant.Outlined" @bind-value="OrderContext.OrderStatus">
+                                                @foreach (var status in Enum.GetValues<OrderStatus.Status>())
+                                                {
+                                                    <MudSelectItem Value="status">@status</MudSelectItem>
+                                                }
+                                            </MudSelect>
+                                        </MudTd>
+                                        <MudTd>
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="(() => UpdateOrder(OrderContext))">Uppdatera</MudButton>
+                                        </MudTd>
+                                    </RowTemplate>
+                                </MudTable>
+                            </MudCardContent>
+                        </MudCard>
+                    </td>
+                </MudTr>
+            }
+        </ChildRowContent>
+    </MudTable>
+</MudTabPanel>
+<MudTabPanel Text="Ordrar">
+    <td colspan="4">
+        <MudCard Elevation="0">
+            <MudCardContent Class="pa-0">
+                <MudTable Items="@Orders" Context="OrderContext" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+                    <ColGroup>
+                        <col/>
+                        <col/>
+                        <col/>
+                    </ColGroup>
+                    <HeaderContent>
+                        <MudTh>Order Id</MudTh>
+                        <MudTh>Spel</MudTh>
+                        <MudTh>Stad</MudTh>
+                        <MudTh>Gata</MudTh>
+                        <MudTh>Post Nummer</MudTh>
+                        <MudTh>Orderstatus</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Order Id">@OrderContext.Id</MudTd>
+                        <MudTd DataLabel="Spel">
+                            <MudTable Items="@OrderContext.Games" Context="GamesContext">
+                                <HeaderContent>
+                                    <MudTh>Spel Id</MudTh>
+                                    <MudTh>Namn</MudTh>
+                                    <MudTh>Pris</MudTh>
+                                    <MudTh>Antal</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Spel Id">@GamesContext.GameId</MudTd>
+                                    <MudTd DataLabel="Namn">@GamesContext.Name</MudTd>
+                                    <MudTd DataLabel="Pris">@GamesContext.Price</MudTd>
+                                    <MudTd DataLabel="Kvantitet">@GamesContext.Quantity</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </MudTd>
+                        <MudTd DataLabel="Stad">@OrderContext.ShippingAddress.City</MudTd>
+                        <MudTd DataLabel="Gata">@OrderContext.ShippingAddress.Street</MudTd>
+                        <MudTd DataLabel="Post Nummer">@OrderContext.ShippingAddress.Zipcode</MudTd>
+                        <MudTd>
+                            <MudSelect T="OrderStatus.Status" Label="Orderstatus" Variant="Variant.Outlined" @bind-value="OrderContext.OrderStatus">
+                                @foreach (var status in Enum.GetValues<OrderStatus.Status>())
+                                {
+                                    <MudSelectItem Value="status">@status</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudTd>
+                        <MudTd>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="(() => UpdateOrder(OrderContext))">Uppdatera</MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCardContent>
+        </MudCard>
+    </td>
+</MudTabPanel>
+<MudTabPanel Text="Produkter">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="AddGamesModal">Lägg till produkt</MudButton>
+    <MudTable Items=@Games>
+        <HeaderContent>
+            <MudTh>Namn</MudTh>
+            <MudTh>Antal i Lager</MudTh>
+            <MudTh></MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Namn">@context.Name</MudTd>
+            <MudTd DataLabel="Antal i Lager">
+                <b>@context.Quantity</b>
+            </MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Warning" Size="Size.Small" OnClick="() => UpdatePage(context.Id)">
+                    Ändra produkt
+                </MudButton>
+            </MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                           Size="Size.Small" OnClick="() => DeleteGame(context)">
+                    Ta bort produkt
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudTabPanel>
+</MudTabs>
+</MudItem>
+</MudGrid>
+
+
+@code {
+    private List<UserForList> Users { get; set; } = new();
+    private List<GameForList> Games { get; set; } = new();
+
+    private List<CartGame> Products { get; set; } = new();
+    private List<OrderDetails> Orders { get; set; } = new();
+    private List<OrderDetails> Order { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = await _http.GetFromJsonAsync<List<UserForList>>(Constants.Users);
+
+        var gamesUrl = QueryHelpers.AddQueryString(Constants.Games, nameof(GameFilters.OnlyInStock), false.ToString());
+        Games = await _http.GetFromJsonAsync<List<GameForList>>(gamesUrl);
+        Orders = await _http.GetFromJsonAsync<List<OrderDetails>>(Constants.GetAllOrders());
+    }
+
+    private async Task DeleteGame(GameForList game)
+    {
+    // Show alert to confirm delete
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", "Är du säker att du vill ta bort detta spel?");
+        parameters.Add("ButtonText", "Ta bort");
+        parameters.Add("Color", Color.Error);
+        parameters.Add("GameId", game.Id);
+
+        var options = new DialogOptions() {CloseButton = true, MaxWidth = MaxWidth.ExtraSmall};
+
+    // WARNING!!!!!!
+        var result = DialogService.Show<DialogComponent>("Ta bort", parameters, options);
+        var theRealResult = await result.Result;
+        var result3 = theRealResult.Cancelled;
+        if (!result3)
+        {
+            Games.Remove(game);
+        }
+    }
+
+    private async Task GetCart(string id)
+    {
+        foreach (var user in Users)
+        {
+            user.ShowCartDetails = false;
+        }
+        var tmpUser = Users.Find(x => x.AppUserId == id);
+        tmpUser.ShowCartDetails = !tmpUser.ShowCartDetails;
+        Products = await _http.GetFromJsonAsync<List<CartGame>>(Constants.Cart + id);
+    }
+
+    private async Task GetOrder(string email)
+    {
+        foreach (var user in Users)
+        {
+            user.ShowOrderDetails = false;
+        }
+        var tmpUser = Users.Find(x => x.Email == email);
+        tmpUser.ShowOrderDetails = !tmpUser.ShowOrderDetails;
+        Order = await _http.GetFromJsonAsync<List<OrderDetails>>(Constants.Orders + email);
+    }
+
+
+    private void UpdatePage(int id)
+    {
+        _navigationManager.NavigateTo($"/api/update-game/{id}");
+    }
+
+
+    private async Task AddGamesModal()
+    {
+    // WARNING!!!!!!
+        var options = new DialogOptions {CloseOnEscapeKey = true};
+        var result = DialogService.Show<AddProdsModalAdmin>("Lägg till spel", options);
+        var realResult = await result.Result;
+        var realRealResult = (GameForList) realResult.Data;
+        var cancelled = realResult.Cancelled;
+        if (!cancelled)
+        {
+            Games.Add(realRealResult);
+        }
+    }
+
+    private async Task UpdateOrder(OrderDetails id)
+    {
+        await _http.PutAsJsonAsync(Constants.Orders + id.Id, id);
+        Snackbar.Add("Orderstatus uppdaterad", Severity.Success);
+    }
+
+}

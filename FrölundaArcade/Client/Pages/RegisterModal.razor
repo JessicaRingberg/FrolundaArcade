@@ -1,0 +1,54 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using FrölundaArcade.Client.Helpers
+@using System.Net.Http.Json
+@using System.Net
+@inject HttpClient _http
+@inject IDialogService DialogService
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+<DataAnnotationsValidator/>
+    <MudItem xs="12">
+        <MudCard Class="px-5 py-3 mud-height-full">
+            <MudCardContent Class="pa-0">
+                <MudTextField Label="Andvändar Namn" @bind-Value="model.UserName" For="@(() => model.UserName)"></MudTextField>
+            </MudCardContent>
+            <MudCardContent Class="pa-0">
+                <MudTextField Label="Email" @bind-Value="model.Email" For="@(() => model.Email)"></MudTextField>
+            </MudCardContent>
+            <MudCardContent Class="pa-0">
+                <MudTextField Label="Telefon Number" @bind-Value="model.PhoneNumber" For="@(() => model.PhoneNumber)"></MudTextField>
+            </MudCardContent>
+            <MudCardContent Class="pa-0">
+                <MudTextField Label="Stad" @bind-Value="model.Address.City" For="@(() => model.Address.City)"></MudTextField>
+            </MudCardContent>
+            <MudCardContent Class="pa-0">
+                <MudTextField Label="Gata" @bind-Value="model.Address.Street" For="@(() => model.Address.Street)"></MudTextField>
+            </MudCardContent>
+            <MudCardContent Class="pa-0">
+                <MudTextField Label="Post Nummer" @bind-Value="model.Address.Zipcode" For="@(() => model.Address.Zipcode)"></MudTextField>
+            </MudCardContent>
+            <MudCardContent Class="pa-0">
+                <MudTextField Label="Lösenord" InputType="InputType.Password" @bind-Value="model.Password" For="@(() => model.Password)"></MudTextField>
+            </MudCardContent>
+            <MudCardContent Class="pa-0">
+                <MudTextField Label="Bekräfta Lösenord" InputType="InputType.Password" @bind-Value="model.ConfirmPassword" For="@(() => model.ConfirmPassword)"></MudTextField>
+            </MudCardContent>
+            <MudCardActions Class="py-4" Style="justify-content:center">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Style="display:flex; justify-content:center;">Registera</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</EditForm>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    UserRegister model = new UserRegister(){Address = new AddressDetails()};
+
+    private async Task OnValidSubmit()
+    {
+        var responseMessage = await _http.PostAsJsonAsync(Constants.Register(), model);
+        HttpStatusCode statusCode = responseMessage.StatusCode;
+        MudDialog.Close(statusCode);
+    }
+}

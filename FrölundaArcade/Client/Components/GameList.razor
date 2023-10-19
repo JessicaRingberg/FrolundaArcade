@@ -1,0 +1,72 @@
+﻿@inject HttpClient _http
+@inject NavigateTo NavigateTo
+@inject GuestCart GuestCart
+@inject ISnackbar Snackbar
+
+@foreach (var game in Games)
+{
+    <MudItem xs="12" sm="6" md="4" Style="margin-bottom:2rem;">
+        <MudCard Outlined="true" Style="min-height: 500px">
+            <a href="/game-details/@game.Id">
+                <MudCardMedia style="background-size: contain;" Image=@game.ImageURL/>
+            </a>
+            <MudCardContent>
+                <MudText Typo="Typo.h5">@game.Name</MudText>
+                @if (game.AgeLimit is not null)
+                {
+                    <MudText Typo="Typo.body2">Åldersgräns: @game.AgeLimit år</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2"><br/></MudText>
+                }
+                <MudText Typo="Typo.h6">@game.Price@currency</MudText>
+            </MudCardContent>
+            <MudCardActions Style="justify-content: space-evenly; gap: 1rem;">
+                @if (game.Quantity > 0)
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mr-2" OnClick="() => AddToCart(game.Id)">
+                        Köp
+                    </MudButton>
+                }
+                else
+                {
+                    <MudText Color="Color.Primary" Class="mr-2">Snart i lager</MudText>
+                }
+                <MudButton Variant="Variant.Text" OnClick="() => NavigateTo.GameDetails(game.Id)">Mer info</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+}
+
+@code{
+    private string currency = "kr";
+
+    [Parameter]
+    public List<GameForList> Games { get; set; } = new();
+    [Parameter]
+    public bool _isLoggedIn { get; set; }
+
+    internal async Task AddToCart(int id)
+    {
+        if(_isLoggedIn)
+        {
+            await _http.PostAsync($"api/Cart/{id}", null);
+        }
+        else
+        {
+            var game = Games.FirstOrDefault(x => x.Id == id);
+            var cartGame = new CartGame
+                {
+                    GameId = id,
+                    Name = game.Name,
+                    Price = game.Price,
+                    ImageURL = game.ImageURL,
+                    Quantity = 1
+                };
+                GuestCart.Add(cartGame);
+        }
+
+        Snackbar.Add("Produkt tillagd i kundvagn", Severity.Info);
+    }
+}

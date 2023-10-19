@@ -1,0 +1,210 @@
+﻿@page "/game-details/{id:int}"
+@inject HttpClient _http
+@inject ISnackbar Snackbar
+@inject NavigateTo NavigateTo
+@inject GuestCart GuestCart
+
+<PageTitle>Game details</PageTitle>
+<MudGrid Justify="Justify.Center">
+    <MudItem xs="12" sm="5">
+        <MudCarousel Class="mud-width-full" Style="height: 400px;" ShowArrows="@arrows" ShowBullets="@bullets" AutoCycle="@autocycle"
+                     AutoCycleTime="TimeSpan.FromSeconds(3)" TData="string">
+            <MudCarouselItem Transition="transition">
+                <div class="d-flex" style="height: 100%">
+                    <MudImage Fluid="true" Src="@_game.ImageUrl"></MudImage>
+                </div>
+            </MudCarouselItem>
+            @foreach (var item in _game.ImageUrls)
+            {
+                <MudCarouselItem Transition="transition">
+                    <div class="d-flex" style="height: 100%">
+                        <MudImage Fluid="true" Src="@item"></MudImage>
+                    </div>
+                </MudCarouselItem>
+            }
+        </MudCarousel>
+    </MudItem>
+    <MudItem xs="12" sm="5" Class="p-5">
+
+        <MudText Typo="Typo.h4" Style="font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif">@_game.Name</MudText>
+
+        <MudText Class="ml-4 mt-2" Typo="Typo.h6" Color="@(_lessThanFiveInStock ? Color.Error : Color.Primary)">@GetInStockText()</MudText>
+
+        <MudText Class="ml-4 mt-2" Typo="Typo.h6">@_game.Price @currency</MudText>
+        <MudNavLink Class="mt-2" Style="color: #20663E;" IconColor="Color.Inherit" Icon="@Icons.Filled.AddShoppingCart"
+                    OnClick="() => AddToCart(_game.Id)">
+            Köp
+        </MudNavLink>
+
+
+        @if (_game.AverageReview.HasValue)
+        {
+            <MudRating ReadOnly="true" SelectedValue="(int) Math.Round(_game.AverageReview.Value)" />
+        }
+
+        @if (_game.AgeLimit.HasValue)
+        {
+            <MudImage Class="mt-4 ms-2 d-block" Style="Width: 50px; height: 60px;" Fluid="true" Src=@($"/PegiImages/pegi{_game.AgeLimit.Value}.png")></MudImage>
+        }
+    </MudItem>
+    <MudGrid Justify="Justify.Center" Spacing="0">
+
+        <MudItem xs="12" sm="10" lg="8">
+            <MudHidden Breakpoint="Breakpoint.Xs">
+                <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" MaxHeight="2">
+                    <MudTabPanel Text="Information">
+                        <MudMarkdown Value="@_game.Description"/>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Recensioner">
+                        <MudList>
+                            @foreach (var review in _game.Reviews)
+                            {
+                                <MudListItem>
+                                    <MudRating ReadOnly="true" SelectedValue="review.Rating"/>
+                                    <MudText>@review.Text</MudText>
+                                    <AuthorizeView Roles="@Roles.Admin">
+                                        <MudIconButton Title="Ta Bort" Icon="@Icons.Filled.Delete" OnClick="() => DeleteReview(review.ReviewId)" Color="Color.Inherit"/>
+                                    </AuthorizeView>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    </MudTabPanel>
+                    <MudTabPanel Text="Tekniska specifikationer">
+                        <MudMarkdown Value="@_game.TechnicalSpec"/>
+                    </MudTabPanel>
+                    @if (_game.CategoryName != Constants.Tillbehör)
+                    {
+                        <MudTabPanel Text="@Constants.Tillbehör">
+                            <MudGrid>
+                                <GameList Games="_accessories"/>
+                            </MudGrid>
+                        </MudTabPanel>
+                    }
+                </MudTabs>
+            </MudHidden>
+            
+            <MudHidden Breakpoint="Breakpoint.SmAndUp">
+                <MudExpansionPanels>
+                    <MudExpansionPanel Text="Information" Style="font-weight: bold">
+                        <MudMarkdown Value="@_game.Description"/>
+                    </MudExpansionPanel>
+                    <MudExpansionPanel Text="Recensioner"  Style="font-weight: bold" >
+                        <MudList>
+                            @foreach (var review in _game.Reviews)
+                            {
+                                <MudListItem>
+                                    <MudRating ReadOnly="true" SelectedValue="review.Rating"/>
+                                    <MudText>@review.Text</MudText>
+                                    <AuthorizeView Roles="@Roles.Admin">
+                                        <MudIconButton Title="Ta Bort" Icon="@Icons.Filled.Delete" OnClick="() => DeleteReview(review.ReviewId)" Color="Color.Inherit"/>
+                                    </AuthorizeView>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    </MudExpansionPanel>
+                    <MudExpansionPanel Text="Tekniska specifikationer"  Style="font-weight: bold">
+                        <MudMarkdown Value="@_game.TechnicalSpec"/>
+                    </MudExpansionPanel>
+                    @if (_game.CategoryName != Constants.Tillbehör)
+                    {
+                        <MudExpansionPanel Text="Tillbehör"  Style="font-weight: bold">
+                            <MudGrid>
+                                <GameList Games="_accessories"/>
+                            </MudGrid>
+                        </MudExpansionPanel>
+                    }
+                </MudExpansionPanels>
+            </MudHidden>
+        </MudItem>
+    </MudGrid>
+</MudGrid>
+
+@if (_game.RelatedGames.Any())
+{
+    <MudGrid Class="mt-5">
+        <MudItem xs="12">
+            @if (_game.CategoryName != Constants.Tillbehör)
+            {
+                <MudText Typo="Typo.h6" Align="Align.Center">Liknande Spel</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.h6" Align="Align.Center">Liknande Produkter</MudText>
+            }
+        </MudItem>
+        <GameList Games="_game.RelatedGames" />
+    </MudGrid>
+}
+
+@code {
+    private string currency = "kr";
+    private bool arrows = true;
+    private bool bullets = true;
+    private bool autocycle = true;
+    private bool _lessThanFiveInStock;
+    private Transition transition = Transition.Slide;
+
+    private GameDetails _game = new();
+    private List<GameForList> _accessories = new();
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthStateTask { get; set; }
+
+    private bool _isLoggedIn = false;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var authState = await AuthStateTask;
+        _isLoggedIn = authState?.User?.Identity?.IsAuthenticated ?? false;
+        _game = await _http.GetFromJsonAsync<GameDetails>(Constants.GameDetails(Id));
+        var query = QueryHelpers.AddQueryString(Constants.Games, new Dictionary<string, string>
+{
+            {nameof(GameFilters.Category), Constants.Tillbehör},
+            {nameof(GameFilters.AmountOfItems), "3"}
+        });
+        _accessories = await _http.GetFromJsonAsync<List<GameForList>>(query);
+        _lessThanFiveInStock = _game.Quantity < 5;
+    }
+
+    private string GetInStockText()
+    {
+        return _game.Quantity switch
+        {
+            0 => "Snart i lager",
+            < 5 => "Få kvar i lager",
+            _ => "Finns i lager"
+        };
+    }
+
+    internal async Task AddToCart(int id)
+    {
+        if (_isLoggedIn)
+        {
+            var response = await _http.PostAsync($"api/Cart/{id}", null);
+        }
+        else
+        {
+            var cartGame = new CartGame
+            {
+                GameId = id,
+                Name = _game.Name,
+                Price = _game.Price,
+                ImageURL = _game.ImageUrl,
+                Quantity = 1
+            };
+            GuestCart.Add(cartGame);
+        }
+
+        Snackbar.Add("Produkt tillagd i kundvagn", Severity.Info);
+    }
+
+    private async Task DeleteReview(int id)
+    {
+        await _http.DeleteAsync(Constants.Reviews(Id) + id);
+        Snackbar.Add("Produkten är borta för altid", Severity.Success);
+        _game.Reviews = _game.Reviews.Where(x => x.ReviewId != id).ToArray();
+    }
+}

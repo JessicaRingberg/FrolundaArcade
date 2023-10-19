@@ -1,0 +1,65 @@
+﻿@page "/api/update-game/{id:int}"
+@inject HttpClient _http
+@inject NavigationManager _navigationManager
+@attribute [Authorize(Roles = Roles.Admin)]
+@using FrölundaArcade.Client.Helpers
+
+<EditForm Model="@GameToUpdate" OnValidSubmit="OnValidUpdate">
+
+    <DataAnnotationsValidator/>
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Namn"
+                                  @bind-Value="GameToUpdate.Name" For="@(() => GameToUpdate.Name)" />
+                    <MudTextField Label="Beskrivning" Class="mt-3"
+                                  @bind-Value="GameToUpdate.Description" For="@(() => GameToUpdate.Description)" />
+                    <MudNumericField Label="Åldersgräns" Class="mt-3"
+                                     @bind-Value="GameToUpdate.AgeLimit" For="@(() => GameToUpdate.AgeLimit)" />
+                    <MudNumericField Label="Kvantitet" Class="mt-3"
+                                     @bind-Value="GameToUpdate.Quantity" For="@(() => GameToUpdate.Quantity)" />
+                    <MudTextField Label="Bild URL" Class="mt-3"
+                                  @bind-Value="GameToUpdate.ImageUrl" For="@(() => GameToUpdate.ImageUrl)" />
+                    <MudTextField Label="Pris" Class="mt-3"
+                                  @bind-Value="GameToUpdate.Price" For="@(() => GameToUpdate.Price)" />
+                    <MudSelect T="int" Label="Kategori" @bind-Value="GameToUpdate.CategoryId">
+                        @foreach (var category in Categories)
+                        {
+                            <MudSelectItem Value="@category.Id">@category.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudTextField Label="Teknisk specifikation" Class="mt-3"
+                                  @bind-Value="GameToUpdate.TechnicalSpec" For="@(() => GameToUpdate.TechnicalSpec)" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Uppdatera</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+@code {
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthStateTask { get; set; }
+
+    [Parameter]
+    public int Id { get; set; }
+
+    public GameUpsert GameToUpdate { get; set; } = new();
+    public List<Category> Categories { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateTask;
+        GameToUpdate = await _http.GetFromJsonAsync<GameUpsert>(Constants.Games + Id);
+        Categories = await _http.GetFromJsonAsync<List<Category>>(Constants.Categories);
+    }
+
+    private async Task OnValidUpdate()
+    {
+        await _http.PutAsJsonAsync(Constants.Games + Id, GameToUpdate);
+        _navigationManager.NavigateTo("/admin");
+    }
+
+}

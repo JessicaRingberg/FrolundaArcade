@@ -1,0 +1,87 @@
+﻿@using FrölundaArcade.Client.Helpers
+@using FrölundaArcade.Client.Pages
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using System.Net
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@inject SignOutSessionStateManager SignOutManager
+@inject IDialogService DialogService
+@inject HttpClient _http
+
+<AuthorizeView>
+    <Authorized>
+        <MudToolBar>
+            <MudIconButton Title="Hem" Icon="@Icons.Material.Rounded.Home" Link="/" Color="Color.Inherit"/>
+            <MudIconButton Title="Events" Icon="@Icons.Filled.Event" Color="Color.Inherit" Link="/event-page"/>
+            <MudIconButton Title="Kundkorg" Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Inherit" Link="/cart"/>
+            <MudIconButton Title="Mina Sidor" Icon="@Icons.Filled.Person" Link="/myPages" Color="Color.Inherit"/>    
+            <AuthorizeView Context="AdminContext" Roles="@Roles.Admin">
+                <MudIconButton Title="Admin" Icon="@Icons.Filled.AdminPanelSettings" Link="/admin" Color="Color.Inherit"/>
+            </AuthorizeView>
+            <MudIconButton Title="Logga Ut" Icon="@Icons.Filled.Logout" OnClick="BeginSignOut" Color="Color.Inherit" Class="mr-5" />
+    </MudToolBar>  
+    </Authorized>
+    <NotAuthorized>
+        <MudToolBar>
+            <MudIconButton Title="Hem" Icon="@Icons.Material.Rounded.Home" Link="/" Color="Color.Inherit"/>
+            <MudIconButton Title="Events" Icon="@Icons.Filled.Event" Color="Color.Inherit" Link="/event-page"/>
+            <MudIconButton Title="Kundkorg" Color="Color.Inherit" Icon="@Icons.Material.Filled.ShoppingCart" Link="/cart"/>
+            <MudIconButton Icon="@Icons.Filled.Login" Title="Logga In" OnClick="LoginModal" Color="Color.Inherit" />
+            <MudIconButton Icon="@Icons.Filled.PersonAddAlt" Title="Registera" OnClick="RegisterModal" Color="Color.Inherit" Class="mr-5" />
+
+        </MudToolBar>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+
+    private async Task BeginSignOut(MouseEventArgs args)
+    {
+        await SignOutManager.SetSignOutState();
+        Navigation.NavigateTo("authentication/logout");
+    }
+
+    private async Task LoginModal()
+    {
+        var options = new DialogOptions { CloseButton = true, CloseOnEscapeKey = true, Position = DialogPosition.TopRight };
+        var result = DialogService.Show<LoginModal>("Logga in", options);
+        var realResult = await result.Result;
+        var cancelled = realResult.Cancelled;
+        if(!cancelled)
+        {
+            var statusCode = (HttpStatusCode)realResult.Data;
+            if(statusCode == HttpStatusCode.OK)
+            {  
+                Navigation.NavigateTo("authentication/login");
+                Snackbar.Add("Välkommen", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add("Misslyckad försök igen", Severity.Info);
+            }
+        }
+    }
+
+    private async Task RegisterModal()
+    {
+        var options = new DialogOptions { CloseButton = true, CloseOnEscapeKey = true, Position = DialogPosition.TopRight };
+        var result = DialogService.Show<RegisterModal>("Registera", options);
+        var realResult = await result.Result;
+        var cancelled = realResult.Cancelled;
+        if(!cancelled)
+        {
+            var statusCode = (HttpStatusCode)realResult.Data;
+            if(statusCode == HttpStatusCode.OK)
+            {  
+                Navigation.NavigateTo("authentication/login");
+                Snackbar.Add("Välkommen", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add("Misslyckas", Severity.Info);
+            }
+        }
+    }
+}
+
